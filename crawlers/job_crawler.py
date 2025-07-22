@@ -3,7 +3,16 @@ from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import time
 from urllib.robotparser import RobotFileParser
-import ssl  # Add this import if missing
+import ssl
+
+import streamlit as st
+import base64
+import os
+
+# Import crawl_jsearch from jsearch_crawler.py
+import sys
+sys.path.append(os.path.dirname(__file__))
+from jsearch_crawler import crawl_jsearch
 
 def init_driver():
     options = Options()
@@ -12,7 +21,6 @@ def init_driver():
     return driver
 
 def is_url_allowed(url: str, user_agent: str = "*") -> bool:
-    # Bypass SSL certificate verification
     ssl._create_default_https_context = ssl._create_unverified_context
     rp = RobotFileParser()
     rp.set_url(url.rsplit("/", 1)[0] + "/robots.txt")
@@ -29,7 +37,6 @@ def crawl_indeed(keyword: str, location: str = "", num_results: int = 10, ignore
     driver.get(url)
     time.sleep(3)
     soup = BeautifulSoup(driver.page_source, "html.parser")
-    # ...adjust selectors as necessary...
     job_cards = soup.find_all("div", class_="jobsearch-SerpJobCard")
     results = []
     for card in job_cards[:num_results]:
@@ -48,18 +55,53 @@ def crawl_indeed(keyword: str, location: str = "", num_results: int = 10, ignore
     return results
 
 def crawl_linkedin(keyword: str, location: str = "", num_results: int = 10):
-    # IMPORTANT: LinkedIn's robots.txt explicitly disallows automated crawling.
-    # Do not run this function without obtaining explicit permission from LinkedIn.
     raise RuntimeError("Automated crawling of LinkedIn is prohibited by its robots.txt. Please obtain permission.")
 
-if __name__ == "__main__":
-    print("Indeed Jobs:")
-    indeed_jobs = crawl_indeed("Software Engineer", "New York", num_results=3)
-    for job in indeed_jobs:
-        print(job)
+def preview_pdf(pdf_bytes):
+    """
+    Display a PDF preview in Streamlit.
+    """
+    try:
+        st.header("CV Preview")
+        st.pdf(pdf_bytes)
+    except AttributeError:
+        b64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
+        pdf_display = f'<iframe src="data:application/pdf;base64,{b64_pdf}" width="700" height="1000" type="application/pdf"></iframe>'
+        st.markdown(pdf_display, unsafe_allow_html=True)
 
-    # Uncomment only if permission is granted for LinkedIn crawling:
-    # print("\nLinkedIn Jobs:")
-    # linkedin_jobs = crawl_linkedin("Software Engineer", "New York", num_results=3)
-    # for job in linkedin_jobs:
-    #     print(job)
+def main():
+    st.title("Job Application Coach")
+    st.write("Search for jobs and generate your CV!")
+
+    # Get job listings from jsearch_crawler.py
+    jobs = crawl_jsearch(keyword="developer", location="Berlin", num_results=3, country="de", work_from_home=False, job_platform="XING")
+
+    st.subheader("Job Listings")
+    for job in jobs:
+        title = job.get("title") or job.get("job_title")
+        company = job.get("company") or job.get("employer_name")
+        location = job.get("location") or job.get("job_location")
+        url = job.get("url") or job.get("job_apply_link")
+        st.markdown(f"**{title}** at {company} ({location})  \n[Job Link]({url})")
+
+    st.subheader("CV Generator")
+    if st.button("Generate CV"):
+        sample_pdf_path = os.path.join(os.path.dirname(__file__), "sample_cv.pdf")
+        if os.path.exists(sample_pdf_path):
+            with open(sample_pdf_path, "rb") as f:
+                pdf_bytes = f.read()
+            with st.expander("Preview Generated CV", expanded=True):
+                preview_pdf(pdf_bytes)
+            st.success("CV generated and previewed below!")
+            st.download_button("Download CV PDF", pdf_bytes, "cv.pdf", "application/pdf")
+        else:
+            st.error("sample_cv.pdf not found. Please add a sample PDF for preview.")
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print("Indeed Jobs:")
+        indeed_jobs = crawl_indeed("Software Engineer", "New York", num_results=3)
+        for job in indeed_jobs:
+            print(job)
