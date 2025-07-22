@@ -4,6 +4,9 @@ import smtplib
 from email.message import EmailMessage
 from typing import List, Dict
 
+from dotenv import load_dotenv
+load_dotenv()  # Load environment variables from .env file
+
 import streamlit as st
 import pandas as pd  # Added for data editor functionality
 # Replace import for Careerjet crawler with JSearch crawler:
@@ -19,26 +22,28 @@ except ImportError:
 # Helper functions – one per agent in your architecture diagram
 ################################################################################
 
-def crawl_jobs(keyword: str, location: str, num_results: int = 10) -> List[Dict]:
-    """Return a list of job dicts for the UI (stubbed).
+# Remove or comment out unused crawler functions:
+# def crawl_jobs(keyword: str, location: str, num_results: int = 10) -> List[Dict]:
+#     """Return a list of job dicts for the UI (stubbed).
+# 
+#     Swap this with Selenium/Playwright + BeautifulSoup OR a third‑party API.
+#     """
+#     return [
+#         {
+#             "title": f"{keyword} Engineer {i + 1}",
+#             "company": "Acme Corp",
+#             "location": location,
+#             "snippet": "We are looking for a talented …",
+#             "url": f"https://example.com/job/{i + 1}",
+#             "full_description": (
+#                 "We need a {keyword} engineer with expertise in Python, SQL, and AWS. "
+#                 "Familiarity with Kubernetes and CI/CD is a plus. Strong communication "
+#                 "skills and experience with agile methodologies required."
+#             ),
+#         }
+#         for i in range(num_results)
+#     ]
 
-    Swap this with Selenium/Playwright + BeautifulSoup OR a third‑party API.
-    """
-    return [
-        {
-            "title": f"{keyword} Engineer {i + 1}",
-            "company": "Acme Corp",
-            "location": location,
-            "snippet": "We are looking for a talented …",
-            "url": f"https://example.com/job/{i + 1}",
-            "full_description": (
-                "We need a {keyword} engineer with expertise in Python, SQL, and AWS. "
-                "Familiarity with Kubernetes and CI/CD is a plus. Strong communication "
-                "skills and experience with agile methodologies required."
-            ),
-        }
-        for i in range(num_results)
-    ]
 # --- CV generation -----------------------------------------------------------
 
 def generate_cv(json_data: dict, output_path: str = "generated_cv.pdf") -> str:
@@ -215,8 +220,12 @@ with st.form("personal_info_form", clear_on_submit=False):
     
     st.divider()
     st.markdown("#### 🔍 Job search defaults")
-    keyword = st.text_input("Keyword", st.session_state.get("job_params", {}).get("keyword", title))
-    location = st.text_input("Preferred Location", st.session_state.get("job_params", {}).get("location", "Remote"))
+    keyword = st.text_input("Keyword", st.session_state.get("job_params", {}).get("keyword", "developer jobs in bonn"))
+    location = st.text_input("Preferred Location", st.session_state.get("job_params", {}).get("location", ""))
+    # Add a country selector:
+    country = st.selectbox("Country", ["US", "UK", "DE", "FR"], index=["US", "UK", "DE", "FR"].index(st.session_state.get("job_params", {}).get("country", "US")), key="job_country")
+    # Add a work-from-home selector:
+    work_from_home = st.checkbox("Work From Home Only", value=st.session_state.get("job_params", {}).get("work_from_home", False), key="job_wfh")
     
     if st.form_submit_button("Save & Continue ➡️"):
         st.session_state["profile"] = {
@@ -227,7 +236,7 @@ with st.form("personal_info_form", clear_on_submit=False):
             "experience": exp_df_form.to_dict("records"),
             "education": edu_df_form.to_dict("records"),
         }
-        st.session_state["job_params"] = {"keyword": keyword, "location": location}
+        st.session_state["job_params"] = {"keyword": keyword, "location": location, "country": country, "work_from_home": work_from_home}
         st.success("Saved! Now explore the tabs.")
 
 # -----------------------------------------------------------------------------
@@ -240,24 +249,25 @@ jobs_tab, cv_tab, interview_tab, email_tab = st.tabs(
 
 # --- 🔍 Job Search -----------------------------------------------------------
 with jobs_tab:
-    st.subheader("Find relevant positions (powered by your form inputs)")
+    st.subheader("Find relevant positions (powered by the JSearch API)")
+    st.info("Example search: 'developer jobs in bonn'")
     if not state.get("job_params"):
         st.info("Please fill in the **Personal Information & Job Preferences** form first.")
     else:
         keyword_input = st.text_input("Keyword", value=state.job_params["keyword"], key="job_keyword_input")
         location_input = st.text_input("Location", value=state.job_params["location"], key="job_location_input")
-        state.job_params.update({"keyword": keyword_input, "location": location_input})
+        country_input = st.selectbox("Country", ["US", "UK", "DE", "FR"], index=["US", "UK", "DE", "FR"].index(state.job_params.get("country", "US")), key="job_country_input")
+        work_from_home_input = st.checkbox("Work From Home Only", value=state.job_params.get("work_from_home", False), key="job_wfh_input")
+        state.job_params.update({"keyword": keyword_input, "location": location_input, "country": country_input, "work_from_home": work_from_home_input})
         num_results = st.slider("Number of results", 1, 10, 5)
         if st.button("Search Jobs"):
-            with st.spinner("Crawling job boards …"):
-                # Call JSearch RapidAPI crawler instead of Careerjet crawler
-                job_results = crawl_jsearch(keyword_input, location_input, num_results)
-                # Add default fields if missing
+            with st.spinner("Fetching jobs using JSearch API ..."):
+                job_results = crawl_jsearch(keyword_input, location_input, num_results, country=country_input, work_from_home=work_from_home_input)
                 for job in job_results:
                     job.setdefault("snippet", "No snippet available.")
                     job.setdefault("full_description", "No description available.")
                 state.job_results = job_results
-            st.success(f"Fetched {len(state.job_results)} jobs for *{keyword_input}* in *{location_input}*.")
+            st.success(f"Fetched {len(state.job_results)} jobs for *{keyword_input}* in *{location_input}* ({country_input}) [WfH: {work_from_home_input}].")
 
     if state.job_results:
         for job in state.job_results:
