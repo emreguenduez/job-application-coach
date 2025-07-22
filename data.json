@@ -1,0 +1,116 @@
+{
+    "name": "Alex Schmidt",
+    "email": "alex.schmidt@example.com",
+    "location": "Bonn, Germany",
+    "desired_job_title": "Senior Python Software Engineer",
+    "skills": [
+        "Python",
+        "Machine Learning",
+        "Django",
+        "REST APIs",
+        "TensorFlow",
+        "Data Analysis"
+    ],
+    "work_experience": [
+        {
+            "job_title": "Senior Software Engineer",
+            "position": "Backend Developer",
+            "company": "Tech Solutions GmbH",
+            "location": "Cologne, Germany",
+            "begin_date": "2021-06",
+            "end_date": "2025-07"
+        },
+        {
+            "job_title": "Software Engineer",
+            "position": "Full Stack Developer",
+            "company": "InnovateX",
+            "location": "Bonn, Germany",
+            "begin_date": "2018-01",
+            "end_date": "2021-05"
+        },
+        {
+            "job_title": "Python Developer",
+            "position": "Backend Developer",
+            "company": "AlphaTech",
+            "location": "Berlin, Germany",
+            "begin_date": "2017-01",
+            "end_date": "2017-12"
+        },
+        {
+            "job_title": "Junior Software Engineer",
+            "position": "Software Developer",
+            "company": "NextSoft",
+            "location": "Hamburg, Germany",
+            "begin_date": "2015-06",
+            "end_date": "2016-12"
+        },
+        {
+            "job_title": "Intern Software Engineer",
+            "position": "Intern",
+            "company": "BrightCode",
+            "location": "Frankfurt, Germany",
+            "begin_date": "2015-01",
+            "end_date": "2015-05"
+        },
+        {
+            "job_title": "Software Tester",
+            "position": "QA Engineer",
+            "company": "TestLine",
+            "location": "Stuttgart, Germany",
+            "begin_date": "2014-06",
+            "end_date": "2014-12"
+        },
+        {
+            "job_title": "IT Support Assistant",
+            "position": "Assistant",
+            "company": "UniTech Support",
+            "location": "Berlin, Germany",
+            "begin_date": "2013-01",
+            "end_date": "2014-05"
+        }
+    ],
+    "education": [
+        {
+            "institution": "University of Bonn",
+            "area_of_study": "Computer Science",
+            "location": "Bonn, Germany",
+            "begin_date": "2021-10",
+            "end_date": "2023-09"
+        },
+        {
+            "institution": "Technical University of Berlin",
+            "area_of_study": "Computer Engineering",
+            "location": "Berlin, Germany",
+            "begin_date": "2014-10",
+            "end_date": "2018-07"
+        },
+        {
+            "institution": "Berlin Tech Institute",
+            "area_of_study": "Information Systems",
+            "location": "Berlin, Germany",
+            "begin_date": "2013-10",
+            "end_date": "2014-09"
+        },
+        {
+            "institution": "Software Training Center",
+            "area_of_study": "Python Programming",
+            "location": "Hamburg, Germany",
+            "begin_date": "2012-01",
+            "end_date": "2012-12"
+        },
+        {
+            "institution": "Open Online Academy",
+            "area_of_study": "Web Development",
+            "location": "Online",
+            "begin_date": "2011-06",
+            "end_date": "2011-12"
+        },
+        {
+            "institution": "Berlin High School",
+            "area_of_study": "Science",
+            "location": "Berlin, Germany",
+            "begin_date": "2009-09",
+            "end_date": "2011-06"
+        }
+    ]
+}
