@@ -12,6 +12,8 @@ import pandas as pd  # Added for data editor functionality
 # Replace import for Careerjet crawler with JSearch crawler:
 from crawlers.jsearch_crawler import crawl_jsearch
 
+import requests  # Add if not already imported
+
 # Optional: only required if you want LLM‑generated interview questions or skill extraction
 try:
     import openai  # type: ignore
@@ -22,27 +24,19 @@ except ImportError:
 # Helper functions – one per agent in your architecture diagram
 ################################################################################
 
-# Remove or comment out unused crawler functions:
-# def crawl_jobs(keyword: str, location: str, num_results: int = 10) -> List[Dict]:
-#     """Return a list of job dicts for the UI (stubbed).
-# 
-#     Swap this with Selenium/Playwright + BeautifulSoup OR a third‑party API.
-#     """
-#     return [
-#         {
-#             "title": f"{keyword} Engineer {i + 1}",
-#             "company": "Acme Corp",
-#             "location": location,
-#             "snippet": "We are looking for a talented …",
-#             "url": f"https://example.com/job/{i + 1}",
-#             "full_description": (
-#                 "We need a {keyword} engineer with expertise in Python, SQL, and AWS. "
-#                 "Familiarity with Kubernetes and CI/CD is a plus. Strong communication "
-#                 "skills and experience with agile methodologies required."
-#             ),
-#         }
-#         for i in range(num_results)
-#     ]
+# Add helper function to send data to the n8n webhook
+def send_to_webhook(data: dict, webhook_url: str = "http://localhost:5678/webhook/2037dafb-3a78-4ece-9f03-3db50f6dda2f"):
+    try:
+        response = requests.post(
+            webhook_url, 
+            json=data, 
+            headers={"Content-Type": "application/json"}
+        )
+        response.raise_for_status()
+        return True
+    except Exception as e:
+        st.error("Error sending to webhook: " + str(e))
+        return False
 
 # --- CV generation -----------------------------------------------------------
 
@@ -79,22 +73,35 @@ def generate_cv(json_data: dict, output_path: str = "generated_cv.pdf") -> str:
     pdf.multi_cell(0, 5, ", ".join(json_data.get("skills", [])))
     pdf.ln(3)
 
-    # Experience --------------------------------------------------------------
+    # Experience - convert list to string if needed ---------------------------
     pdf.set_font_size(14)
     pdf.cell(0, 8, "Experience", ln=1)
     pdf.set_font_size(12)
-    pdf.multi_cell(0, 5, json_data.get("experience", ""))
+    experience = json_data.get("experience", "")
+    if isinstance(experience, list):
+        # Join each record (assumed to be dict) into a single string
+        experience_str = "\n".join([", ".join(str(val) for val in record.values()) for record in experience if isinstance(record, dict)])
+    else:
+        experience_str = str(experience)
+    pdf.multi_cell(0, 5, experience_str)
     pdf.ln(3)
 
-    # Education ---------------------------------------------------------------
+    # Education - convert list to string if needed ----------------------------
     pdf.set_font_size(14)
     pdf.cell(0, 8, "Education", ln=1)
     pdf.set_font_size(12)
-    pdf.multi_cell(0, 5, json_data.get("education", ""))
+    education = json_data.get("education", "")
+    if isinstance(education, list):
+        education_str = "\n".join([", ".join(str(val) for val in record.values()) for record in education if isinstance(record, dict)])
+    else:
+        education_str = str(education)
+    pdf.multi_cell(0, 5, education_str)
 
     # Job‑specific section ----------------------------------------------------
     job_desc = json_data.get("job_description", "")
     if job_desc:
+        # Replace unsupported bullet characters "•" with a supported alternative
+        job_desc = job_desc.replace("•", "- ")
         pdf.ln(4)
         pdf.set_font_size(14)
         pdf.cell(0, 8, "Target Job Highlights", ln=1)
@@ -220,10 +227,10 @@ with st.form("personal_info_form", clear_on_submit=False):
     
     st.divider()
     st.markdown("#### 🔍 Job search defaults")
-    keyword = st.text_input("Keyword", st.session_state.get("job_params", {}).get("keyword", "developer jobs in bonn"))
+    keyword = st.text_input("Keyword", st.session_state.get("job_params", {}).get("keyword", "developer jobs"))
     location = st.text_input("Preferred Location", st.session_state.get("job_params", {}).get("location", ""))
     # Add a country selector:
-    country = st.selectbox("Country", ["US", "UK", "DE", "FR"], index=["US", "UK", "DE", "FR"].index(st.session_state.get("job_params", {}).get("country", "US")), key="job_country")
+    country = st.selectbox("Country", ["US", "UK", "DE", "FR"], index=["US", "UK", "DE", "FR"].index(st.session_state.get("job_params", {}).get("country", "DE")), key="job_country")
     # Add a work-from-home selector:
     work_from_home = st.checkbox("Work From Home Only", value=st.session_state.get("job_params", {}).get("work_from_home", False), key="job_wfh")
     
@@ -334,6 +341,15 @@ with interview_tab:
             for q in state.interview_questions:
                 st.write(f"• {q}")
             st.caption("Tip: rehearse concise STAR‑format answers.")
+            # New: Button to send the generated questions to the webhook
+            if st.button("Send Questions to Webhook"):
+                payload = {
+                    "interview_questions": state.interview_questions,
+                    "job": job_options.get(selected_job, {}),
+                    "profile": state.profile
+                }
+                if send_to_webhook(payload):
+                    st.success("Interview questions sent to webhook!")
 
 # --- 📧 Email Text Generator --------------------------------------------------
 with email_tab:

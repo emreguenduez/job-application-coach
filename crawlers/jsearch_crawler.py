@@ -3,16 +3,16 @@ import requests
 from dotenv import load_dotenv
 load_dotenv()  # Load environment variables from .env file
 
-def crawl_jsearch(keyword: str, location: str = "", num_results: int = 10, country: str = "US", work_from_home: bool = False, rapidapi_key: str = None):
+def crawl_jsearch(keyword: str, location: str = "", num_results: int = 10, country: str = "US", work_from_home: bool = False, job_platform: str = "LinkedIn", rapidapi_key: str = None):
     if rapidapi_key is None:
         rapidapi_key = os.getenv("RAPIDAPI_KEY", "")
         print("RapidAPI Key:", rapidapi_key)
     base_url = "https://jsearch.p.rapidapi.com/search"
-    # Build query string, include location if provided
+    # Build query string to include location and job platform if provided
     if location:
-        query = f"{keyword} jobs in {location}"
+        query = f"{keyword} in {location} via {job_platform}"
     else:
-        query = f"{keyword} jobs"
+        query = f"{keyword} via {job_platform}"
     params = {
         "query": query,
         "page": 1,
@@ -46,6 +46,6 @@ def crawl_jsearch(keyword: str, location: str = "", num_results: int = 10, count
 
 # Example usage
 if __name__ == "__main__":
-    results = crawl_jsearch("Software Engineer", "New York", num_results=3, country="us", work_from_home=True)
+    results = crawl_jsearch("Software Engineer", "New York", num_results=3, country="us", work_from_home=True, job_platform="LinkedIn")
     for job in results:
         print(job)
