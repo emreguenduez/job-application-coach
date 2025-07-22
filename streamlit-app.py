@@ -9,7 +9,7 @@ load_dotenv()  # Load environment variables from .env file
 
 import streamlit as st
 import pandas as pd  # Added for data editor functionality
-# Replace import for Careerjet crawler with JSearch crawler:
+from utils.webhook import send_to_webhook  # Use the new webhook utility
 from crawlers.jsearch_crawler import crawl_jsearch
 
 import requests  # Add if not already imported
@@ -23,20 +23,6 @@ except ImportError:
 ################################################################################
 # Helper functions – one per agent in your architecture diagram
 ################################################################################
-
-# Add helper function to send data to the n8n webhook
-def send_to_webhook(data: dict, webhook_url: str = "http://localhost:5678/webhook/2037dafb-3a78-4ece-9f03-3db50f6dda2f"):
-    try:
-        response = requests.post(
-            webhook_url, 
-            json=data, 
-            headers={"Content-Type": "application/json"}
-        )
-        response.raise_for_status()
-        return True
-    except Exception as e:
-        st.error("Error sending to webhook: " + str(e))
-        return False
 
 # --- CV generation -----------------------------------------------------------
 
@@ -204,36 +190,14 @@ with st.form("personal_info_form", clear_on_submit=False):
         summary = st.text_area("Professional Summary", st.session_state.get("profile", {}).get("summary", ""))
     with c2:
         skills = st.text_input("Key Skills (comma‑separated)", "Python, SQL, JavaScript")
-    
     st.markdown("#### 🧳 Experience")
-    # Place the editable Experience table inside the form:
-    exp_df_form = st.data_editor(
-        pd.DataFrame(st.session_state.get("profile", {}).get("experience", [{
-            "Company": "", "Position": "", "Location": "", "Begin Date": "", "End Date": ""
-        }])),
-        num_rows="dynamic",
-        key="exp_items_form"
-    )
-    
+    exp_df_form = st.data_editor(pd.DataFrame(st.session_state.get("profile", {}).get("experience", [{
+        "Company": "", "Position": "", "Location": "", "Begin Date": "", "End Date": ""
+    }])), num_rows="dynamic", key="exp_items_form")
     st.markdown("#### 🎓 Education")
-    # Place the editable Education table inside the form:
-    edu_df_form = st.data_editor(
-        pd.DataFrame(st.session_state.get("profile", {}).get("education", [{
-            "Institution": "", "Area of Study": "", "Location": "", "Begin Date": "", "End Date": ""
-        }])),
-        num_rows="dynamic",
-        key="edu_items_form"
-    )
-    
-    st.divider()
-    st.markdown("#### 🔍 Job search defaults")
-    keyword = st.text_input("Keyword", st.session_state.get("job_params", {}).get("keyword", "developer jobs"))
-    location = st.text_input("Preferred Location", st.session_state.get("job_params", {}).get("location", ""))
-    # Add a country selector:
-    country = st.selectbox("Country", ["US", "UK", "DE", "FR"], index=["US", "UK", "DE", "FR"].index(st.session_state.get("job_params", {}).get("country", "DE")), key="job_country")
-    # Add a work-from-home selector:
-    work_from_home = st.checkbox("Work From Home Only", value=st.session_state.get("job_params", {}).get("work_from_home", False), key="job_wfh")
-    
+    edu_df_form = st.data_editor(pd.DataFrame(st.session_state.get("profile", {}).get("education", [{
+        "Institution": "", "Area of Study": "", "Location": "", "Begin Date": "", "End Date": ""
+    }])), num_rows="dynamic", key="edu_items_form")
     if st.form_submit_button("Save & Continue ➡️"):
         st.session_state["profile"] = {
             "name": name,
@@ -243,13 +207,11 @@ with st.form("personal_info_form", clear_on_submit=False):
             "experience": exp_df_form.to_dict("records"),
             "education": edu_df_form.to_dict("records"),
         }
-        st.session_state["job_params"] = {"keyword": keyword, "location": location, "country": country, "work_from_home": work_from_home}
         st.success("Saved! Now explore the tabs.")
 
 # -----------------------------------------------------------------------------
 # Tabs
 # -----------------------------------------------------------------------------
-
 jobs_tab, cv_tab, interview_tab, email_tab = st.tabs(
     ["🔍 Job Search", "📄 CV Generator", "🎤 Interview Prep", "📧 Generate Email"]
 )
@@ -258,23 +220,34 @@ jobs_tab, cv_tab, interview_tab, email_tab = st.tabs(
 with jobs_tab:
     st.subheader("Find relevant positions (powered by the JSearch API)")
     st.info("Example search: 'developer jobs in bonn'")
-    if not state.get("job_params"):
-        st.info("Please fill in the **Personal Information & Job Preferences** form first.")
+    if not state.get("profile"):
+        st.info("Please fill in the **Personal Information** form first.")
     else:
-        keyword_input = st.text_input("Keyword", value=state.job_params["keyword"], key="job_keyword_input")
-        location_input = st.text_input("Location", value=state.job_params["location"], key="job_location_input")
-        country_input = st.selectbox("Country", ["US", "UK", "DE", "FR"], index=["US", "UK", "DE", "FR"].index(state.job_params.get("country", "US")), key="job_country_input")
-        work_from_home_input = st.checkbox("Work From Home Only", value=state.job_params.get("work_from_home", False), key="job_wfh_input")
-        state.job_params.update({"keyword": keyword_input, "location": location_input, "country": country_input, "work_from_home": work_from_home_input})
+        # Use the saved Professional Title as the default keyword.
+        default_keyword = state.profile.get("title", "developer jobs")
+        keyword_input = st.text_input("Keyword", value=state.get("job_params", {}).get("keyword", default_keyword), key="job_keyword_input")
+        location_input = st.text_input("Location", value=state.get("job_params", {}).get("location", ""), key="job_location_input")
+        country_input = st.selectbox("Country", ["US", "UK", "DE", "FR"], index=["US", "UK", "DE", "FR"].index(state.get("job_params", {}).get("country", "DE")), key="job_country_input")
+        work_from_home_input = st.checkbox("Work From Home Only", value=state.get("job_params", {}).get("work_from_home", False), key="job_wfh_input")
+        platform_input = st.selectbox("Preferred Platform", ["LinkedIn", "Indeed", "Xing"], index=["LinkedIn", "Indeed", "Xing"].index(state.get("job_params", {}).get("platform", "LinkedIn")), key="job_platform_input")
+        state.job_params.update({
+            "keyword": keyword_input,
+            "location": location_input,
+            "country": country_input,
+            "work_from_home": work_from_home_input,
+            "platform": platform_input
+        })
         num_results = st.slider("Number of results", 1, 10, 5)
         if st.button("Search Jobs"):
             with st.spinner("Fetching jobs using JSearch API ..."):
-                job_results = crawl_jsearch(keyword_input, location_input, num_results, country=country_input, work_from_home=work_from_home_input)
+                job_results = crawl_jsearch(keyword_input, location_input, num_results, country=country_input, work_from_home=work_from_home_input, job_platform=platform_input)
+                # Slice the results to the desired number, ensuring only that many listings are displayed.
+                job_results = job_results[:num_results]
                 for job in job_results:
                     job.setdefault("snippet", "No snippet available.")
                     job.setdefault("full_description", "No description available.")
                 state.job_results = job_results
-            st.success(f"Fetched {len(state.job_results)} jobs for *{keyword_input}* in *{location_input}* ({country_input}) [WfH: {work_from_home_input}].")
+            st.success(f"Fetched {len(state.job_results)} jobs for *{keyword_input}* in *{location_input}* ({country_input}) [WfH: {work_from_home_input}], Preferred Platform: {platform_input}.")
 
     if state.job_results:
         for job in state.job_results:
@@ -317,6 +290,17 @@ with cv_tab:
             with open(state.cv_path, "rb") as f:
                 st.download_button("Download CV", data=f.read(), file_name="cv.pdf", mime="application/pdf")
 
+        # New: Send full personal and job data to webhook for CV LLM processing.
+        if st.button("Send CV Request to Webhook"):
+            cv_payload = {
+                "action": "cv_generation",
+                "personal_details": state.profile,
+                "job_listings": state.job_results,
+                "cv_data": profile_data
+            }
+            if send_to_webhook(cv_payload):
+                st.success("CV request sent to webhook!")
+
 # --- 🎤 Interview Prep -------------------------------------------------------
 with interview_tab:
     st.subheader("Interview Question Generator")
@@ -341,15 +325,15 @@ with interview_tab:
             for q in state.interview_questions:
                 st.write(f"• {q}")
             st.caption("Tip: rehearse concise STAR‑format answers.")
-            # New: Button to send the generated questions to the webhook
-            if st.button("Send Questions to Webhook"):
-                payload = {
-                    "interview_questions": state.interview_questions,
-                    "job": job_options.get(selected_job, {}),
-                    "profile": state.profile
+            if st.button("Send Interview Request to Webhook"):
+                interview_payload = {
+                    "action": "interview_prep",
+                    "personal_details": state.profile,
+                    "job_listings": state.job_results,
+                    "interview_questions": state.interview_questions
                 }
-                if send_to_webhook(payload):
-                    st.success("Interview questions sent to webhook!")
+                if send_to_webhook(interview_payload):
+                    st.success("Interview request sent to webhook!")
 
 # --- 📧 Email Text Generator --------------------------------------------------
 with email_tab:
@@ -370,3 +354,13 @@ with email_tab:
     full_email_text = f"Subject: {subject}\n\n{body}"
     st.markdown("### Generated Email Text")
     st.code(full_email_text, language="markdown")
+    if st.button("Send Email Request to Webhook"):
+        email_payload = {
+            "action": "email_generation",
+            "personal_details": state.profile,
+            "job_listings": state.job_results,
+            "email_subject": subject,
+            "email_body": body
+        }
+        if send_to_webhook(email_payload):
+            st.success("Email request sent to webhook!")
