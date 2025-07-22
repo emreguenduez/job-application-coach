@@ -3,7 +3,7 @@ import requests
 from dotenv import load_dotenv
 load_dotenv()  # Load environment variables from .env file
 
-def crawl_jsearch(keyword: str, location: str = "", num_results: int = 10, country: str = "US", work_from_home: bool = False, job_platform: str = "LinkedIn", rapidapi_key: str = None):
+def crawl_jsearch2(keyword: str, location: str = "", num_results: int = 10, country: str = "US", work_from_home: bool = False, job_platform: str = "LinkedIn", rapidapi_key: str = None):
     # Return 3 dummy jobs with keys matching the app's expectations
     dummy_jobs = [
         {
@@ -33,7 +33,7 @@ def crawl_jsearch(keyword: str, location: str = "", num_results: int = 10, count
     ]
     return dummy_jobs[:num_results]
 
-def crawl_jsearch2(keyword: str, location: str = "", num_results: int = 10, country: str = "US", work_from_home: bool = False, job_platform: str = "LinkedIn", rapidapi_key: str = None):
+def crawl_jsearch(keyword: str, location: str = "", num_results: int = 10, country: str = "US", work_from_home: bool = False, job_platform: str = "LinkedIn", rapidapi_key: str = None):
     if rapidapi_key is None:
         rapidapi_key = os.getenv("RAPIDAPI_KEY", "")
         print("RapidAPI Key:", rapidapi_key)
