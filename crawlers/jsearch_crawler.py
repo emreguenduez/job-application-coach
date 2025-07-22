@@ -4,6 +4,36 @@ from dotenv import load_dotenv
 load_dotenv()  # Load environment variables from .env file
 
 def crawl_jsearch(keyword: str, location: str = "", num_results: int = 10, country: str = "US", work_from_home: bool = False, job_platform: str = "LinkedIn", rapidapi_key: str = None):
+    # Return 3 dummy jobs with keys matching the app's expectations
+    dummy_jobs = [
+        {
+            "title": "Web Developer (m/f/d)",
+            "company": "aconium GmbH",
+            "location": "Berlin, DE",
+            "snippet": "We are currently looking for a Web Developer (m/f/d) for our Berlin office.",
+            "url": "https://www.xing.com/jobs/berlin-web-developer-130273527",
+            "full_description": "Full description for Web Developer (m/f/d) at aconium GmbH in Berlin."
+        },
+        {
+            "title": "Java Entwickler:in (m/w/d)",
+            "company": "aconium GmbH",
+            "location": "Berlin, DE",
+            "snippet": "Wir suchen wir ab sofort eine:n Java Entwickler:in (m/w/d) zur Unterstützung.",
+            "url": "https://www.xing.com/jobs/berlin-java-entwickler-137546218",
+            "full_description": "Full description for Java Entwickler:in (m/w/d) at aconium GmbH in Berlin."
+        },
+        {
+            "title": "Full-stack engineer (TS, React, Node)",
+            "company": "Feather",
+            "location": "Berlin, DE",
+            "snippet": "We are looking for a full-stack engineer to join our product team at Feather.",
+            "url": "https://www.xing.com/jobs/berlin-full-stack-engineer-ts-react-node-feather-130614098",
+            "full_description": "Full description for Full-stack engineer (TS, React, Node) at Feather in Berlin."
+        }
+    ]
+    return dummy_jobs[:num_results]
+
+def crawl_jsearch2(keyword: str, location: str = "", num_results: int = 10, country: str = "US", work_from_home: bool = False, job_platform: str = "LinkedIn", rapidapi_key: str = None):
     if rapidapi_key is None:
         rapidapi_key = os.getenv("RAPIDAPI_KEY", "")
         print("RapidAPI Key:", rapidapi_key)

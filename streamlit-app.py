@@ -26,7 +26,7 @@ except ImportError:
 
 def generate_cv(json_data: dict, output_path: str = "generated_cv.pdf") -> str:
     try:
-        from fpdf import FPDF  # lazy import
+        from fpdf import FPDF  # Lazy import
     except ImportError:
         raise RuntimeError("Install fpdf2: pip install fpdf2")
     pdf = FPDF()
@@ -65,7 +65,8 @@ def generate_cv(json_data: dict, output_path: str = "generated_cv.pdf") -> str:
     pdf.set_font_size(12)
     education = json_data.get("education", "")
     if isinstance(education, list):
-        education_str = "\n".join([", ".join(str(val) for val in record.values()) for record in education if isinstance(record, dict)])
+        education_str = "\n".join([", ".join(str(val) for val in record.values()) 
+                                   for record in education if isinstance(record, dict)])
     else:
         education_str = str(education)
     pdf.multi_cell(0, 5, education_str)
@@ -94,7 +95,8 @@ def extract_skills_from_description(description: str) -> List[str]:
 def generate_interview_questions(profile: dict, job_description: str, n_questions: int = 8) -> List[str]:
     if openai and os.getenv("OPENAI_API_KEY"):
         openai.api_key = os.getenv("OPENAI_API_KEY")
-        system_msg = "You are an HR expert. Create concise, thought‑provoking interview questions tailored to the candidate's profile and the role."
+        system_msg = ("You are an HR expert. Create concise, thought‑provoking interview questions "
+                      "tailored to the candidate's profile and the role.")
         user_msg = (
             f"Candidate profile JSON:\n{json.dumps(profile)}\n\n"
             f"Job description:\n{job_description}\n\n"
@@ -120,9 +122,23 @@ def generate_interview_questions(profile: dict, job_description: str, n_question
     ][: n_questions]
 
 ################################################################################
+# PDF Preview Helper
+################################################################################
+def preview_pdf(pdf_bytes):
+    """Display a PDF preview in Streamlit."""
+    try:
+        st.pdf(pdf_bytes)
+    except Exception:
+        b64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
+        pdf_display = (
+            f'<iframe src="data:application/pdf;base64,{b64_pdf}" '
+            'width="700" height="1000" type="application/pdf"></iframe>'
+        )
+        st.markdown(pdf_display, unsafe_allow_html=True)
+
+################################################################################
 # Streamlit UI
 ################################################################################
-
 st.set_page_config(page_title="Job Application AI", page_icon="🧑‍💻", layout="wide")
 st.title("🎯 Job Application AI Agent")
 
