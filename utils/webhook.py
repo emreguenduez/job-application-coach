@@ -9,7 +9,11 @@ def send_to_webhook(data: dict, webhook_url: str = "http://localhost:5678/webhoo
             headers={"Content-Type": "application/json"}
         )
         response.raise_for_status()
-        return response.json()  # return the full response content
+        try:
+            return response.json()
+        except ValueError:
+            return {"raw_response": response.text}  # fallback to raw text
     except Exception as e:
         st.error("Webhook error: " + str(e))
-        return {}  # return empty dict on error
+        return {}
+

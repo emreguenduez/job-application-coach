@@ -257,82 +257,140 @@ with cv_tab:
                 }
                 # Send the payload to the webhook and expect generated CV data in response.
                 result = send_to_webhook(unified_payload)
-                if result.get("generated_cv_data"):
-                    # Use the returned generated CV data to build the PDF.
-                    state["cv_path"] = generate_cv(result["generated_cv_data"])
-                    st.success("Personalised CV generated!")
+                if result.get("cover_letters"):
+                    # örnek olarak ilk mektubu alıyoruz
+                    first_letter = next(iter(result["cover_letters"].values()))
+                    profile_data["job_description"] = first_letter
+                    state["cv_path"] = generate_cv(profile_data)
                 else:
                     st.error("Failed to receive generated CV data from webhook.")
         if state.get("cv_path"):
             with open(state["cv_path"], "rb") as f:
                 st.download_button("Download CV", data=f.read(), file_name="cv.pdf", mime="application/pdf")
 
+
 # --- Interview Prep Tab ---
 with interview_tab:
     st.subheader("Interview Question Generator")
+    
     if not state.get("job_results"):
         st.info("Run a job search first so we have a description to analyse.")
     else:
+        # Job seçenekleri oluştur
         job_options = {f"{i+1}. {j['title']} – {j['company']}": j for i, j in enumerate(state["job_results"])}
         selected_job = st.selectbox("Choose a job posting", list(job_options.keys()))
         jd_default = job_options[selected_job]["full_description"]
-        job_description = st.text_area("Job description", jd_default, height=150)
+
+        # Dinamik yükseklik: 20 karakter/satır, 5 piksel/satır
+        estimated_lines = max(len(jd_default) // 100, 10)
+        text_area_height = estimated_lines * 20  # örn. 20 piksel/satır
+
+        job_description = st.text_area("Job description", jd_default, height=text_area_height)
+
         quick_profile = {
             "name": state["profile"].get("name", ""),
             "title": state["profile"].get("title", ""),
             "skills": state["profile"].get("skills", []),
         }
-        if st.button("Generate Questions"):
-            with st.spinner("Calling interview‑prep agent …"):
-                state["interview_questions"] = generate_interview_questions(quick_profile, job_description)
-            st.success("Questions ready!")
-        if state.get("interview_questions"):
-            st.markdown("### Suggested Questions")
-            for q in state["interview_questions"]:
-                st.write(f"• {q}")
-            st.caption("Tip: rehearse concise STAR‑format answers.")
-            if st.button("Send Interview Request to Webhook"):
-                unified_payload = {
-                    "personal_details": state["profile"],
-                    "job_listings": state.get("job_results", [])
-                }
-                result = send_to_webhook(unified_payload)
-                if result.get("generated_interview_questions"):
-                    st.success("Interview questions received from webhook!")
-                    st.markdown("### Generated Interview Questions")
-                    for q in result["generated_interview_questions"]:
-                        st.write(f"• {q}")
-                else:
-                    st.error("Failed to receive generated interview questions from webhook.")
+
+
+        # Tüm joblar için webhook'a gönder
+        if st.button("Generate Interview Questions For Selected Job"):
+            unified_payload = {
+                "action": "question",  # 👈 yeni alan
+                "personal_details": state["profile"],
+                "job_listings": state.get("job_results", [])
+            }
+
+            result = send_to_webhook(unified_payload)
+
+            # Normalize: Eğer liste geldiyse içinden al
+            result_dict = result[0] if isinstance(result, list) and result else result
+
+            # Başlık eşlemesi için liste oluştur
+            job_titles = [f"{job['title']} – {job['company']}" for job in state["job_results"]]
+
+            if result_dict:
+                st.success("Interview questions received!")
+                for i, (job_key, job_data) in enumerate(result_dict.items()):
+                    # Eşleşen başlıkla göster (ya da fallback)
+                    title = job_titles[i] if i < len(job_titles) else job_key
+                    questions = job_data.get("interview_questions", [])
+
+                    if questions:
+                        st.markdown(f"### {title}")
+                        for j, qa in enumerate(questions, 1):
+                            q = qa.get("question", "").strip()
+                            a = qa.get("answer", "").strip()
+                            if q:
+                                st.markdown(f"**Q{j}: {q}**")
+                                if a:
+                                    st.markdown(f"**A{j}: {a}**")
+                    else:
+                        st.warning(f"No questions found for {title}")
+
+                state["interview_questions"] = result_dict
+            else:
+                st.error("No interview questions received from webhook.")
+
+
 
 # --- Email Text Generator Tab ---
 with email_tab:
     st.subheader("Generate Email Text")
+
     job_options = {"<None>": None}
     if state.get("job_results"):
         for i, job in enumerate(state["job_results"]):
             label = f"{i+1}. {job['title']} – {job['company']}"
             job_options[label] = job
+
     selected_job_label = st.selectbox("Select a job listing to reference", list(job_options.keys()))
     selected_job = job_options[selected_job_label]
+
     if selected_job:
         default_subject = f"Regarding the {selected_job['title']} position at {selected_job['company']}"
     else:
         default_subject = f"Regarding the {state.get('job_params', {}).get('keyword', '')} position"
-    subject = st.text_input("Subject", default_subject)
-    body = st.text_area("Message", value="Hello,\n\nI am excited to apply …\n\nBest regards,\n")
-    full_email_text = f"Subject: {subject}\n\n{body}"
-    st.markdown("### Generated Email Text")
-    st.code(full_email_text, language="markdown")
+
     if st.button("Send Email Request to Webhook"):
         unified_payload = {
+            "action": "email",  
+            "selected_job": selected_job,
             "personal_details": state["profile"],
-            "job_listings": state.get("job_results", [])
+            #"job_listings": state.get("job_results", []),
+            
         }
         result = send_to_webhook(unified_payload)
-        if result.get("generated_email"):
-            st.success("Email draft received from webhook!")
-            st.markdown("### Generated Email Draft")
-            st.code(result["generated_email"], language="markdown")
+
+        # Normalize webhook result (handle both dict and list)
+        result_dict = result[0] if isinstance(result, list) and result else result
+
+        if result_dict.get("email_draft", {}).get("draft"):
+            draft_text = result_dict["email_draft"]["draft"]
+            job_title = f"{selected_job['title']} – {selected_job['company']}"
+            
+            subject = f"Regarding the {selected_job['title']} position at {selected_job['company']}"
+            
+            # Satır boşluklarını düzelt
+            formatted_text = draft_text.replace("\\n", "\n")
+
+            # Yüksekliği ayarla
+            lines = max(formatted_text.count("\n") + 5, 12)
+            height = lines * 20
+
+            # Konu ayrı göster
+            st.markdown(f"**Subject:** `{subject}`")
+
+            # Taslak mail metni
+            st.text_area("Email Preview", formatted_text, height=height, key="email_preview")
+
+
+
         else:
-            st.error("Failed to receive generated email from webhook.")
+            st.warning("Email draft not returned by webhook. (This is normal if email step is disabled.)")
+
+
+
+
+
