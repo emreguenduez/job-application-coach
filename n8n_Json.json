@@ -1,0 +1,364 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "submissions",
+        "fields": {
+          "field": []
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        1880,
+        140
+      ],
+      "id": "1eacee93-5fb3-435f-8559-32da61570119",
+      "name": "MongoDB1",
+      "credentials": {
+        "mongoDb": {
+          "id": "uZHsG5135nLVqfPP",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2500,
+        880
+      ],
+      "id": "950b8531-730c-4c62-a703-2bf277bd8127",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b750c753-06bd-4114-8c17-c4aa2b16302d",
+                    "leftValue": "={{$json.payload[\"action\"]}}",
+                    "rightValue": "email",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Email"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.payload[\"action\"]}}",
+                    "rightValue": "question",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "d1f39880-b255-4ac6-b936-958dc6a49ddb"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Question"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1740,
+        860
+      ],
+      "id": "48281b02-5db8-4c3a-8e8c-9ce324a9e5ed",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "2037dafb-3a78-4ece-9f03-3db50f6dda2f",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        860
+      ],
+      "id": "df220a03-f780-4eff-b142-45eb3cabe9a1",
+      "name": "Webhook",
+      "webhookId": "2037dafb-3a78-4ece-9f03-3db50f6dda2f"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      payload: $json.body\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1580,
+        860
+      ],
+      "id": "5bdc4d73-d0fe-41f1-b584-d1ee51fea9c4",
+      "name": "Set_Code"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo-16k",
+          "mode": "list",
+          "cachedResultName": "GPT-3.5-TURBO-16K"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a professional Email Draft Generator Agent.\n\nYour task is to generate a personalized job application email using the values from the JSON input.\n\nUse the placeholders below, which correspond to specific JSON fields provided in the input. Each placeholder must be replaced using the data paths shown.\n\nJSON Field Mapping:\n\n{{$json.payload.selected_job.title}}\t[position]\n{{$json.payload.selected_job.company}}\t[company_name]\n{{$json.payload.selected_job.location}}\t[job_location]\n{{$json.payload.selected_job.full_description}}\t[job_description] (yönlendirme amaçlı içerik analizi)\n{{$json.payload.personal_details.name}}\t[applicant_name]\n{{$json.payload.personal_details.summary}}\t[personal_summary]\n{{$json.payload.personal_details.skills}}\t[skills] (virgülle ayrılmış)\n{{$json.payload.personal_details.experience[0]}}\t[first_experience]\n{{$json.payload.personal_details.education[0][\"Area of Study\"]}}\t[education_area]\n{{$json.payload.personal_details.education[0].Institution}}\t[education_institution]\n\n\nInstructions:\n\n- Replace all placeholders with actual values using the mappings above.\n- If any optional fields (e.g., experience) are missing, skip them gracefully.\n- Use a professional, polite, and confident tone.\n- Return only the final email draft as plain text. Do not include comments, markdown, or additional formatting.\n\nEmail Template:\n\nDear Hiring Manager,\n\nI am writing to express my sincere interest in the [position] role at [company_name], located in [job_location]. With a solid foundation in [education_area] from [education_institution], and a strong track record in [skills], I am confident that my qualifications align closely with the responsibilities and requirements described in your job listing.\n\n[company_name]’s emphasis on [highlight a key theme from job_description] strongly resonates with my professional experience and goals. During my time as [first_experience], I was directly involved in [insert a related task or accomplishment based on job_description], which enabled me to develop a deep understanding of [relevant domain].\n\nMy personal strengths lie in my ability to [insert a soft skill or technical strength from personal_summary], combined with my hands-on experience in tools and methods such as [skills]. I am particularly excited about the opportunity to contribute to [company_name]’s initiatives involving [mention something relevant from job_description, e.g., “machine learning in credit risk assessment” or “cross-functional data-driven decision-making”].\n\nHaving reviewed the full description of the [position] role, I am enthusiastic about the opportunity to bring my expertise to a team that values [mention company values or approaches if available in job_description, e.g., “innovation, client impact, and collaboration”]. I am confident that my skill set not only fulfills the requirements but also brings added value in areas such as [optional: mention unique perspective or contribution].\n\nI would welcome the chance to discuss how my background and passion for [position or industry] align with the vision and goals of [company_name]. Thank you for considering my application.\n\nSincerely,  \n[applicant_name]\n",
+              "role": "=user"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        2000,
+        760
+      ],
+      "id": "b6795ded-3ba0-4054-b920-2b5946bf4108",
+      "name": "Email Draft Agent",
+      "credentials": {
+        "openAiApi": {
+          "id": "2eJ5N9zmjvbmnn06",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo-16k",
+          "mode": "list",
+          "cachedResultName": "GPT-3.5-TURBO-16K"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an Interview Question Generator Agent.\n\nYour task is to analyze job listing details and generate high-quality, job-specific mock interview questions and answers.\n\nInstructions:\nThe input is a JSON object containing a single job listing under the key \"selected_job\".\n\nGenerate exactly 10 realistic and technically relevant question-answer pairs.\n\nDo not alter or abbreviate any keys.\n\nUse the job title, company name, and full description (including responsibilities and requirements).\n\nAvoid generic HR-style questions like \"What are your strengths?\" or \"Why do you want this job?\"\n\nFocus on role-specific, technology-driven, and responsibility-aligned questions.\n\nReplace all vague placeholders like \"technology X\" with real technologies from the job description.\n\nYour output must be a valid JSON object, and nothing else (no markdown, no intro, no commentary).\n\nYou can retrieve the required information using the following format:\n\n{{$json.payload.selected_job.title}}                  → [position]  \n{{$json.payload.selected_job.company}}                → [company_name]  \n{{$json.payload.selected_job.location}}               → [job_location]  \n{{$json.payload.selected_job.full_description}}       → [job_description] (for detailed analysis)  \n{{$json.payload.personal_details.name}}               → [applicant_name]  \n{{$json.payload.personal_details.summary}}            → [personal_summary]  \n{{$json.payload.personal_details.skills}}             → [skills] (comma-separated list)  \n{{$json.payload.personal_details.experience[0]}}      → [first_experience]  \n{{$json.payload.personal_details.education[0][\"Area of Study\"]}} → [education_area]  \n{{$json.payload.personal_details.education[0].Institution}}       → [education_institution]  \nUse these to guide your question and answer generation in a personalized and contextually relevant manner.\n\nOutput Format:\nReturn a valid JSON object like this:\n{\n  \"interview_questions\": [\n    { \"question\": \"...\", \"answer\": \"...\" },\n    { \"question\": \"...\", \"answer\": \"...\" }\n    // Exactly 10 Q&A\n  ]\n}\n",
+              "role": "=user"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        2000,
+        960
+      ],
+      "id": "6b7dabde-1b57-4f37-8124-0ad9bd19c69c",
+      "name": "Interview Question Generator Agent",
+      "credentials": {
+        "openAiApi": {
+          "id": "2eJ5N9zmjvbmnn06",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const content = items[0].json.message.content;\n\nconst formatted = {};\n\nfor (const jobKey in content) {\n  // Eğer içerik zaten bir string ise:\n  formatted[jobKey] = {\n    draft: content[jobKey]\n  };\n\n  // Eğer içerik şu formatta ise: { draft: \"text\" }\n  // o zaman şunu kullanmalısın:\n  // formatted[jobKey] = {\n  //   draft: content[jobKey].draft\n  // };\n}\n\nreturn [{ json: formatted }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2180,
+        760
+      ],
+      "id": "fdc23684-b50b-4894-93f3-ae3dc578847f",
+      "name": "Type_Caster_1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const content = items[0].json.message.content;\n\nconst formatted = {};\n\nfor (const jobKey in content) {\n  formatted[jobKey] = {\n    interview_questions: content[jobKey]\n  };\n}\n\nreturn [{ json: formatted }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2180,
+        960
+      ],
+      "id": "29d576cc-3776-434d-8a5e-f285d4036b96",
+      "name": "Type_Caster_2"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo-0125",
+          "mode": "list",
+          "cachedResultName": "GPT-3.5-TURBO-0125"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are a Cover Letter Generator Agent.\n\nYour task is to create a formal and customized cover letter for each job listing, based on the user's background and the job description.\n\nInstructions:\n\nUse the provided example structure and tone as a template.\n\nFill in all placeholders (marked with [ ]) using relevant information from the user's background and job listing.\n\nIf any detail is missing (e.g., degree or years of experience), omit that part naturally.\n\nFocus on the most relevant experiences, skills, or education that align with the job title and description.\n\nKeep the tone formal and professional.\n\nEnsure the letter is concise and tailored to each job.\n\nSubject: Application for [Job Title] at [Company Name]\n\nDear Hiring Team,\n\nI am writing to apply for the [Job Title] role at your esteemed company. With a [Degree/Qualification] in [Field] from the [University Name] and [X years of experience] in [relevant area], I bring both technical depth and practical expertise. My background in [relevant projects or tools] aligns with your current needs. I would appreciate the opportunity to contribute to your team and discuss how I can support your goals.\n\nKind regards,  \n[Your Name]\n\n\n\nReturn a valid JSON object with this structure:\n\n\n{\n  \"Job_1\": \"Subject: Application for ...\\n\\nDear Hiring Team,\\n\\n...letter body...\\n\\nKind regards,\\nJane Doe\",\n  \"Job_2\": \"...\",\n  ...\n}\n"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        2000,
+        560
+      ],
+      "id": "b1fe73ae-d323-4710-a3e6-4d3398c18d17",
+      "name": "CV Generator Agent",
+      "credentials": {
+        "openAiApi": {
+          "id": "2eJ5N9zmjvbmnn06",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Email Draft Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Interview Question Generator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set_Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set_Code": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Draft Agent": {
+      "main": [
+        [
+          {
+            "node": "Type_Caster_1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interview Question Generator Agent": {
+      "main": [
+        [
+          {
+            "node": "Type_Caster_2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Type_Caster_1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Type_Caster_2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "69064d2a-8c62-4702-8aa6-91063f267796",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8b3444ced120670fe84ad59fef4d2183fdb3332816e655bd78642079070e0b1d"
+  },
+  "id": "ct8R0TrucShCiUvQ",
+  "tags": []
+}
