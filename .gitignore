@@ -1,2 +1,4 @@
 .env
 .venv
+generated_cv.pdf
+__pycache__/

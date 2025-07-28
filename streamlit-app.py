@@ -25,63 +25,141 @@ except ImportError:
 # Helper functions – CV generation, skill extraction and interview question generation
 ################################################################################
 
+from fpdf import FPDF
+
 def generate_cv(json_data: dict, output_path: str = "generated_cv.pdf") -> str:
-    try:
-        from fpdf import FPDF  # Lazy import
-    except ImportError:
-        raise RuntimeError("Install fpdf2: pip install fpdf2")
     pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
     pdf.set_font("Helvetica", size=12)
-    # Title
-    pdf.set_font_size(16)
-    pdf.cell(0, 10, json_data.get("name", ""), ln=1)
-    pdf.set_font_size(12)
-    pdf.cell(0, 8, json_data.get("title", ""), ln=1)
+
+    def safe_text(text):
+        return (
+            text.replace("–", "-")
+                .replace("—", "-")
+                .replace("•", "-")
+                .strip()
+        )
+
+    def truncate_line(text, max_len=150):
+        return text if len(text) <= max_len else text[:max_len] + "..."
+
+    def safe_multiline(text):
+        for line in text.splitlines():
+            line = line.strip()
+            if line:
+                pdf.multi_cell(0, 6, truncate_line(safe_text(line)))
+        pdf.ln(2)
+
+    def draw_line():
+        pdf.ln(2)
+        pdf.set_draw_color(0)
+        pdf.set_line_width(0.5)
+        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+        pdf.ln(3)
+
+    # --- Header ---
+    pdf.set_font("Helvetica", 'B', 16)
+    pdf.cell(0, 10, safe_text(json_data.get("name", "Unnamed")), ln=1, align="C")
+    pdf.set_font("Helvetica", '', 12)
+    pdf.cell(0, 8, safe_text(json_data.get("title", "")), ln=1, align="C")
     pdf.ln(4)
-    # Summary
-    pdf.multi_cell(0, 5, json_data.get("summary", ""))
-    pdf.ln(3)
-    # Skills
-    pdf.set_font_size(14)
-    pdf.cell(0, 8, "Skills", ln=1)
-    pdf.set_font_size(12)
-    pdf.multi_cell(0, 5, ", ".join(json_data.get("skills", [])))
-    pdf.ln(3)
-    # Experience
-    pdf.set_font_size(14)
-    pdf.cell(0, 8, "Experience", ln=1)
-    pdf.set_font_size(12)
-    experience = json_data.get("experience", "")
-    if isinstance(experience, list):
-        experience_str = "\n".join([", ".join(str(val) for val in record.values()) for record in experience if isinstance(record, dict)])
-    else:
-        experience_str = str(experience)
-    pdf.multi_cell(0, 5, experience_str)
-    pdf.ln(3)
-    # Education
-    pdf.set_font_size(14)
-    pdf.cell(0, 8, "Education", ln=1)
-    pdf.set_font_size(12)
-    education = json_data.get("education", "")
-    if isinstance(education, list):
-        education_str = "\n".join([", ".join(str(val) for val in record.values()) 
-                                   for record in education if isinstance(record, dict)])
-    else:
-        education_str = str(education)
-    pdf.multi_cell(0, 5, education_str)
-    # Job-specific section
-    job_desc = json_data.get("job_description", "")
-    if job_desc:
-        job_desc = job_desc.replace("•", "- ")
-        pdf.ln(4)
-        pdf.set_font_size(14)
-        pdf.cell(0, 8, "Target Job Highlights", ln=1)
-        pdf.set_font_size(12)
-        pdf.multi_cell(0, 5, job_desc)
+    pdf.set_font("Helvetica", '', 11)
+    safe_multiline(json_data.get("summary", ""))
+    pdf.ln(4)
+
+    # --- Skills ---
+    skills = json_data.get("skills", [])
+    if skills:
+        pdf.set_font("Helvetica", 'B', 14)
+        pdf.cell(0, 8, "Skills", ln=1)
+        draw_line()
+        pdf.set_font("Helvetica", '', 12)
+        pdf.multi_cell(0, 6, " | ".join(safe_text(skill) for skill in skills))
+        pdf.ln(6)
+
+    # --- Experience ---
+    experience = json_data.get("experience", [])
+    if experience:
+        pdf.set_font("Helvetica", 'B', 14)
+        pdf.cell(0, 8, "Experience", ln=1)
+        draw_line()
+        pdf.ln(1)
+        for exp in experience:
+            company = safe_text(exp.get("Company", ""))
+            position = safe_text(exp.get("Position", ""))
+            location = safe_text(exp.get("Location", ""))
+            begin = safe_text(exp.get("Begin Date", ""))
+            end = safe_text(exp.get("End Date", "Present"))
+            bullets = exp.get("Bullet Points", "")
+
+            # Prepare strings
+            left_text = safe_text(f"{position} - {company}")
+            right_text = safe_text(f"{location} | {begin} - {end}")
+
+            # Font for left side
+            pdf.set_font("Helvetica", 'B', 12)
+            pdf.cell(0, 6, left_text, ln=0)
+
+            # Measure right text width
+            pdf.set_font("Helvetica", 'I', 11)
+            right_width = pdf.get_string_width(right_text)
+
+            # Move cursor to right-aligned position
+            pdf.set_x(pdf.w - pdf.r_margin - right_width)
+            pdf.cell(right_width, 6, right_text, ln=1)
+
+
+            if bullets:
+                pdf.set_font("Helvetica", '', 10)
+                for bullet in bullets.split("\n"):
+                    bullet = bullet.strip()
+                    if bullet:
+                        try:
+                            pdf.multi_cell(0, 6, f"- {truncate_line(safe_text(bullet))}")
+                            pdf.ln(1)  # <-- this ensures the next bullet starts on a new line
+                        except Exception:
+                            pdf.cell(0, 6, "- (line skipped due to rendering error)", ln=1)
+
+            pdf.ln(6)
+
+    # --- Education ---
+    education = json_data.get("education", [])
+    if education:
+        pdf.set_font("Helvetica", 'B', 14)
+        pdf.cell(0, 8, "Education", ln=1)
+        draw_line()
+        pdf.ln(1)
+        for edu in education:
+            institution = safe_text(edu.get("Institution", ""))
+            field = safe_text(edu.get("Area of Study", ""))
+            location = safe_text(edu.get("Location", ""))
+            begin = safe_text(edu.get("Begin Date", ""))
+            end = safe_text(edu.get("End Date", "Present"))
+
+            # First row: Institution on left, Location + Dates on right
+            left_text = safe_text(institution)
+            right_text = safe_text(f"{location} | {begin} - {end}")
+
+            pdf.set_font("Helvetica", 'B', 12)
+            pdf.cell(0, 6, left_text, ln=0)
+
+            pdf.set_font("Helvetica", 'I', 11)
+            right_width = pdf.get_string_width(right_text)
+            pdf.set_x(pdf.w - pdf.r_margin - right_width)
+            pdf.cell(right_width, 6, right_text, ln=1)
+
+            # Second row: field of study
+            pdf.set_font("Helvetica", '', 11)
+            pdf.cell(0, 6, safe_text(field), ln=1)
+
+            pdf.ln(2)
+
+
     pdf.output(output_path)
     return output_path
+
+
 
 COMMON_SKILLS = [
     "python", "java", "javascript", "sql", "aws", "azure", "gcp",
@@ -158,18 +236,55 @@ with st.form("personal_info_form", clear_on_submit=False):
     with c1:
         name = st.text_input("Name", state.get("profile", {}).get("name", "Jane Doe"))
         title = st.text_input("Professional Title", state.get("profile", {}).get("title", "Software Engineer"))
-        summary = st.text_area("Professional Summary", state.get("profile", {}).get("summary", ""))
+        summary = st.text_area("Professional Summary", state.get("profile", {}).get("summary", "Experienced software engineer with a passion for building scalable web applications and leading cross-functional teams."))
     with c2:
         skills = st.text_input("Key Skills (comma‑separated)", "Python, SQL, JavaScript")
+
     st.markdown("#### 🧳 Experience")
-    exp_df_form = st.data_editor(pd.DataFrame(state.get("profile", {}).get("experience", [{
-        "Company": "", "Position": "", "Location": "", "Begin Date": "", "End Date": ""
-    }])), num_rows="dynamic", key="exp_items_form")
+    st.caption("💡 Add bullet points using Shift+Enter for new lines. Format each point with a dash (-) or star (*).")
+
+    # Provide example if no data exists
+    experience_data = state.get("profile", {}).get("experience", [{
+        "Company": "Tech Solutions Inc.",
+        "Position": "Backend Developer",
+        "Location": "New York, NY",
+        "Begin Date": "2020-01",
+        "End Date": "2023-06",
+        "Bullet Points": "Developed REST APIs in Python\nImproved database performance by 30%\nMentored junior developers"
+    }])
+    for item in experience_data:
+        item.setdefault("Bullet Points", "")
+
+    exp_df = pd.DataFrame(experience_data)
+    exp_df.rename(columns={"Bullet Points": "Bullet Points (Shift+Enter for new lines)"}, inplace=True)
+
+    exp_df_form = st.data_editor(
+        exp_df,
+        num_rows="dynamic",
+        key="exp_items_form"
+    )
+
     st.markdown("#### 🎓 Education")
-    edu_df_form = st.data_editor(pd.DataFrame(state.get("profile", {}).get("education", [{
-        "Institution": "", "Area of Study": "", "Location": "", "Begin Date": "", "End Date": ""
-    }])), num_rows="dynamic", key="edu_items_form")
+    st.caption("💡 Include relevant degrees, locations, and study periods.")
+
+    education_data = state.get("profile", {}).get("education", [{
+        "Institution": "University of Example",
+        "Area of Study": "Computer Science",
+        "Location": "Boston, MA",
+        "Begin Date": "2015-09",
+        "End Date": "2019-06"
+    }])
+
+    edu_df_form = st.data_editor(
+        pd.DataFrame(education_data),
+        num_rows="dynamic",
+        key="edu_items_form"
+    )
+
     if st.form_submit_button("Save & Continue ➡️"):
+        # Revert renamed column before saving
+        exp_df_form.rename(columns={"Bullet Points (Shift+Enter for new lines)": "Bullet Points"}, inplace=True)
+
         state["profile"] = {
             "name": name,
             "title": title,
@@ -265,6 +380,10 @@ with cv_tab:
                 else:
                     st.error("Failed to receive generated CV data from webhook.")
         if state.get("cv_path"):
+            with open(state["cv_path"], "rb") as f:
+                pdf_bytes = f.read()
+            with st.expander("Preview Generated CV", expanded=True):
+                preview_pdf(pdf_bytes)
             with open(state["cv_path"], "rb") as f:
                 st.download_button("Download CV", data=f.read(), file_name="cv.pdf", mime="application/pdf")
 

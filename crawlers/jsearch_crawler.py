@@ -36,7 +36,6 @@ def crawl_jsearch2(keyword: str, location: str = "", num_results: int = 10, coun
 def crawl_jsearch(keyword: str, location: str = "", num_results: int = 10, country: str = "US", work_from_home: bool = False, job_platform: str = "LinkedIn", rapidapi_key: str = None):
     if rapidapi_key is None:
         rapidapi_key = os.getenv("RAPIDAPI_KEY", "")
-        print("RapidAPI Key:", rapidapi_key)
     base_url = "https://jsearch.p.rapidapi.com/search"
     # Build query string to include location and job platform if provided
     if location:

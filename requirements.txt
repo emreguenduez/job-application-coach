@@ -4,8 +4,11 @@ blinker==1.9.0
 cachetools==6.1.0
 certifi==2025.7.14
 charset-normalizer==3.4.2
-click==8.2.1
+click==8.1.8
+defusedxml==0.7.1
 dotenv==0.9.9
+fonttools==4.59.0
+fpdf2==2.8.3
 gitdb==4.0.12
 GitPython==3.1.44
 idna==3.10
@@ -14,7 +17,7 @@ jsonschema==4.25.0
 jsonschema-specifications==2025.4.1
 MarkupSafe==3.0.2
 narwhals==1.48.0
-numpy==2.3.1
+numpy==2.0.2
 packaging==25.0
 pandas==2.3.1
 pillow==11.3.0
