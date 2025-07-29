@@ -4,6 +4,7 @@ import json
 import smtplib
 from email.message import EmailMessage
 from typing import List, Dict
+from pathlib import Path
 
 from dotenv import load_dotenv
 load_dotenv()  # Load environment variables from .env file
@@ -345,47 +346,71 @@ with jobs_tab:
 # --- CV Generator Tab ---
 with cv_tab:
     st.subheader("Create a personalised CV (auto‑merging job & profile data)")
+    
     if not state.get("profile"):
         st.info("Fill in the **Personal Information** form first.")
     elif not state.get("job_results"):
         st.info("Run a job search so we have postings to tailor the CV.")
     else:
-        dropdown_options = {"<None>": ""}
-        dropdown_options.update({
-            f"{i+1}. {j['title']} – {j['company']}": j["full_description"]
+        # 🎯 selected_job'ı seçmek için dict oluştur
+        job_options = {
+            f"{i+1}. {j['title']} – {j['company']}": j
             for i, j in enumerate(state["job_results"])
-        })
-        selected_label = st.selectbox("Select a job to tailor your CV", list(dropdown_options.keys()))
-        selected_desc = dropdown_options[selected_label]
-        profile_data = state["profile"].copy()
-        job_skills = extract_skills_from_description(selected_desc) if selected_desc else []
-        combined_skills = sorted({*(profile_data.get("skills", [])), *job_skills}, key=str.lower)
-        profile_data["skills"] = combined_skills
-        profile_data["job_description"] = selected_desc
-        
-        if st.button("Generate CV PDF"):
-            with st.spinner("Sending request to CV agent..."):
-                # Build the unified payload from personal details and job listings.
-                unified_payload = {
-                    "personal_details": state["profile"],
-                    "job_listings": state.get("job_results", [])
-                }
-                # Send the payload to the webhook and expect generated CV data in response.
-                result = send_to_webhook(unified_payload)
-                if result.get("cover_letters"):
-                    # örnek olarak ilk mektubu alıyoruz
-                    first_letter = next(iter(result["cover_letters"].values()))
-                    profile_data["job_description"] = first_letter
-                    state["cv_path"] = generate_cv(profile_data)
-                else:
-                    st.error("Failed to receive generated CV data from webhook.")
-        if state.get("cv_path"):
-            with open(state["cv_path"], "rb") as f:
-                pdf_bytes = f.read()
-            with st.expander("Preview Generated CV", expanded=True):
-                preview_pdf(pdf_bytes)
-            with open(state["cv_path"], "rb") as f:
-                st.download_button("Download CV", data=f.read(), file_name="cv.pdf", mime="application/pdf")
+        }
+
+        selected_label = st.selectbox("Select a job to tailor your CV", list(job_options.keys()))
+        selected_job = job_options[selected_label] if selected_label in job_options else None
+
+        # Eğer geçerli bir iş seçildiyse işlem yap
+        if selected_job:
+            selected_desc = selected_job.get("full_description", "")
+            profile_data = state["profile"].copy()
+
+            # 🎯 job description'dan ek beceriler çıkar
+            job_skills = extract_skills_from_description(selected_desc)
+            combined_skills = sorted({*(profile_data.get("skills", [])), *job_skills}, key=str.lower)
+            profile_data["skills"] = combined_skills
+            profile_data["job_description"] = selected_desc
+
+            if st.button("Generate CV PDF"):
+                with st.spinner("Sending request to CV agent..."):
+                    unified_payload = {
+                        "action": "cv",
+                        "personal_details": state["profile"],
+                        "selected_job": selected_job  # 🔁 Artık sadece seçilen job gönderiliyor
+                    }
+
+                    result = send_to_webhook(unified_payload)
+                    result_dict = result[0] if isinstance(result, list) and result else result
+
+                    # Yeni formatı doğrudan parse et
+                    message = result_dict.get("message", {})
+                    content = message.get("content", {})
+
+                    summary = content.get("summary", "")
+                    bullet_points = content.get("bullet_points", [])
+
+                    if summary and bullet_points:
+                        profile_data["summary"] = summary
+                        # Bulletları tek string olarak birleştir
+                        profile_data["experience"][0]["Bullet Points"] = "\n".join(bullet_points)
+                        
+                        cv_output_path = str(Path("generated_cv.pdf").resolve())
+                        state["cv_path"] = generate_cv(profile_data, output_path=cv_output_path)
+                    else:
+                        st.error("Summary or bullet points missing in response.")
+
+
+            if state.get("cv_path"):
+                with open(state["cv_path"], "rb") as f:
+                    pdf_bytes = f.read()
+                with st.expander("Preview Generated CV", expanded=True):
+                    preview_pdf(pdf_bytes)
+                with open(state["cv_path"], "rb") as f:
+                    st.download_button("Download CV", data=f.read(), file_name="cv.pdf", mime="application/pdf")
+        else:
+            st.warning("Please select a valid job posting.")
+
 
 
 # --- Interview Prep Tab ---
