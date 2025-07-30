@@ -57,33 +57,36 @@ git clone https://github.com/emreguenduez/job-application-coach.git
 cd job-application-coach
 ```
 
-### 2. Install Python Dependencies (for Streamlit)
+### 2. Create a virtual environment and activate it
+```bash
+python -m venv venv
+source venv/bin/activate
+
+```
+### 3. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Configure Environment Variables
+### 4. Configure Environment Variables
 
-Create a `.env` file in the root directory with the following keys:
+Create a `.env` file in the crawlers folder and add RAPIDAPI_KEY key to it. The value for this API key is provided in report.
 
-```env
-OPENAI_API_KEY=your_openai_api_key
-RAPIDAPI_KEY==jsearch_api_key
-```
-
-
-### 4. Run Streamlit UI
+### 5. Run Streamlit UI
 
 ```bash
 streamlit run streamlit-app.py
 ```
 
-### 5. Downlaod and Run n8n Locally
+### 6. Download and Run n8n Locally
 
-### 6. Copy the OpenAPI credentials which is: TODO!!! 
+In n8n editor choose Import from file and then select n8n_Json.json file; this is the n8n workflow. 
 
----
+### 7. Import the OpenAPI Credentials:
+
+Copy and paste the provided OpenAI API key from the report. In n8n editor and inside the credentials section, enter the OpenAI API key and save it. Go to workflow and select this credential for each of the 3 agents and then activate the workflow.
+
 
 ## 📡 How It Works
 
