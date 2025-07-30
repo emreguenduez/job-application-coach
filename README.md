@@ -77,7 +77,7 @@ Create a .env file in the crawlers folder and add RAPIDAPI_KEY key to it. The va
 
 streamlit run streamlit-app.py
 
-🛠️ Download and Run n8n Locally
+### 6. Download and Run n8n Locally
 You can self-host n8n on your local machine to handle backend automation workflows. Here's how:
 
 ⚙️ Local Setup with Docker (Recommended)
