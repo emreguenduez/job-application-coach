@@ -70,17 +70,77 @@ pip install -r requirements.txt
 
 ### 4. Configure Environment Variables
 
-Create a `.env` file in the crawlers folder and add RAPIDAPI_KEY key to it. The value for this API key is provided in report.
+Create a .env file in the crawlers folder and add RAPIDAPI_KEY key to it. The value for this API key is provided in report.
 
 ### 5. Run Streamlit UI
 
-```bash
+
 streamlit run streamlit-app.py
-```
+
 
 ### 6. Download and Run n8n Locally
 
-In n8n editor choose Import from file and then select n8n_Json.json file; this is the n8n workflow. 
+### ⚙️ Local n8n Setup (Self-Hosting)
+
+To run n8n locally (self-hosted) and connect it to this app, follow these steps:
+
+#### 🐳 Option 1: Docker (Recommended)
+
+
+# Create a new folder and start n8n via Docker
+mkdir n8n-data && cd n8n-data
+
+# Pull and run n8n container
+docker run -it --rm \
+  -p 5678:5678 \
+  -v ~/.n8n:/home/node/.n8n \
+  n8nio/n8n
+
+
+* Access the UI at: [http://localhost:5678](http://localhost:5678)
+* You can now build workflows that receive data from your Streamlit app via webhooks.
+
+#### 🔐 Set Admin Credentials (Optional)
+
+
+# Example with basic auth
+docker run -it --rm \
+  -p 5678:5678 \
+  -v ~/.n8n:/home/node/.n8n \
+  -e N8N_BASIC_AUTH_ACTIVE=true \
+  -e N8N_BASIC_AUTH_USER=admin \
+  -e N8N_BASIC_AUTH_PASSWORD=yourpassword \
+  n8nio/n8n
+
+
+---
+
+### 🔗 Connecting to Streamlit App
+
+In your Python code (e.g., `utils/webhook.py`), make sure you send POST requests to:
+
+
+WEBHOOK_URL = "http://localhost:5678/webhook/my-workflow"
+
+
+* Replace `"my-workflow"` with the exact name or path of your webhook node.
+* Use `requests.post(...)` to trigger n8n from Python.
+
+---
+
+### 📌 Tips
+
+* Keep your Docker container running while the app is active.
+* To run n8n in background mode:
+
+ 
+  docker run -d -p 5678:5678 -v ~/.n8n:/home/node/.n8n n8nio/n8n
+ 
+
+---
+
+
+In n8n editor, choose Import from file and then select n8n_Json.json file; this is the n8n workflow. 
 
 ### 7. Import the OpenAPI Credentials:
 
