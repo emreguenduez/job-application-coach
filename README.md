@@ -84,18 +84,16 @@ You can self-host n8n on your local machine to handle backend automation workflo
 Create a directory for n8n data:
 
 bash
-Copy
-Edit
+
 mkdir n8n-data && cd n8n-data
 Pull and run the n8n Docker container:
 
 bash
-Copy
-Edit
-docker run -it --rm \
-  -p 5678:5678 \
-  -v ~/.n8n:/home/node/.n8n \
-  n8nio/n8n
+
+
+docker run -d -p 5678:5678 -v ~/.n8n:/home/node/.n8n n8nio/n8n
+
+
 Access the UI:
 Open your browser and go to: http://localhost:5678
 
