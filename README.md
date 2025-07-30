@@ -102,9 +102,7 @@ You can now visually build workflows that will be triggered by your Streamlit ap
 🔐 Optional: Set Admin Credentials
 To enable basic authentication for your local n8n instance:
 
-bash
-Copy
-Edit
+```bash
 docker run -it --rm \
   -p 5678:5678 \
   -v ~/.n8n:/home/node/.n8n \
@@ -112,12 +110,11 @@ docker run -it --rm \
   -e N8N_BASIC_AUTH_USER=admin \
   -e N8N_BASIC_AUTH_PASSWORD=yourpassword \
   n8nio/n8n
+```
 🔗 Connect Streamlit to n8n
 In your Python app (e.g., utils/webhook.py), send data to n8n using:
 
-python
-Copy
-Edit
+
 WEBHOOK_URL = "http://localhost:5678/webhook/my-workflow"
 Replace "my-workflow" with your actual webhook endpoint in n8n.
 
@@ -128,10 +125,9 @@ Keep the Docker container running while using the app.
 
 To run n8n in the background:
 
-bash
-Copy
-Edit
+```bash
 docker run -d -p 5678:5678 -v ~/.n8n:/home/node/.n8n n8nio/n8n
+```
 📥 Importing the Example Workflow
 To get started quickly:
 
