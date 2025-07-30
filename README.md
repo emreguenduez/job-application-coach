@@ -11,7 +11,7 @@ An intelligent assistant to streamline and automate the job application process 
 * **Automated CV/Email Generation**: Leverages **OpenAI agents** to tailor CVs, cover letters, and emails to job descriptions.
 * **Interview Preparation**: Generates personalized interview questions and answers using LLMs.
 * **n8n Backend Workflows**: Orchestrates tasks like email drafting, file generation, and storage.
-* **Modular Crawlers**: Easily extendable architecture to plug in more job portals.
+* **Modular Crawler**: Easily extendable architecture to plug in more job portals.
 * **Local and Remote Execution**: Backend workflows can run on `n8n.cloud` or locally via Docker.
 
 ---
@@ -21,7 +21,7 @@ An intelligent assistant to streamline and automate the job application process 
 | Layer          | Tools/Frameworks                                         |
 | -------------- | -------------------------------------------------------- |
 | **Frontend**   | Streamlit                                                |
-| **Crawlers**   | Selenium, jSearch API                                    |
+| **API**        | jSearch API                                              |
 | **Backend**    | n8n, Python (Flask/REST)                                 |
 | **Database**   | MongoDB                         |                        |
 | **AI**         | OpenAI GPT (Agents via n8n HTTP modules)                 |
@@ -33,9 +33,8 @@ An intelligent assistant to streamline and automate the job application process 
 ```bash
 JOB-APPLICATION-COACH/
 ├── crawlers/
-│   ├── .env                  # Environment variables for crawlers
-│   ├── job_crawler.py        # job crawling functionality
-│   └── jsearch_crawler.py    # jsearch crawler
+│   ├── .env                  # Environment variables for crawler
+│   └── jsearch_crawler.py    # jsearch API
 ├── utils/
 │   └── webhook.py            # Webhook utilities and handlers
 ├── .gitignore               # Git ignore rules
