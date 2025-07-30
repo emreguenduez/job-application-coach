@@ -334,7 +334,6 @@ with cv_tab:
                         "personal_details": state["profile"],
                         "selected_job": selected_job  # unchanged
                     }
-                    st.write("DEBUG: Payload to webhook:", unified_payload)  # added debug point
 
                     result = send_to_webhook(unified_payload)
                     result_dict = result[0] if isinstance(result, list) and result else result
