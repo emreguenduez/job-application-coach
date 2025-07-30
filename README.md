@@ -83,21 +83,22 @@ You can self-host n8n on your local machine to handle backend automation workflo
 ⚙️ Local Setup with Docker (Recommended)
 Create a directory for n8n data:
 
-bash
 
+```bash
 mkdir n8n-data && cd n8n-data
+```
 Pull and run the n8n Docker container:
 
-bash
+```bash
 
 
 docker run -d -p 5678:5678 -v ~/.n8n:/home/node/.n8n n8nio/n8n
-
+```
 
 Access the UI:
 Open your browser and go to: http://localhost:5678
 
-You can now visually build workflows that will be triggered by your Streamlit app via webhook calls.
+You can now visually build workflows that your Streamlit app will trigger via webhook calls.
 
 🔐 Optional: Set Admin Credentials
 To enable basic authentication for your local n8n instance:
@@ -114,8 +115,10 @@ docker run -it --rm \
 🔗 Connect Streamlit to n8n
 In your Python app (e.g., utils/webhook.py), send data to n8n using:
 
-
+```bash
 WEBHOOK_URL = "http://localhost:5678/webhook/my-workflow"
+```
+
 Replace "my-workflow" with your actual webhook endpoint in n8n.
 
 Use requests.post(...) to send data to the workflow.
