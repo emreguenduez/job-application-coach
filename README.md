@@ -74,13 +74,75 @@ Create a `.env` file in the crawlers folder and add RAPIDAPI_KEY key to it. The 
 
 ### 5. Run Streamlit UI
 
-```bash
+
 streamlit run streamlit-app.py
-```
 
 ### 6. Download and Run n8n Locally
+You can self-host n8n on your local machine to handle backend automation workflows. Here's how:
 
-In n8n editor choose Import from file and then select n8n_Json.json file; this is the n8n workflow. 
+⚙️ Local Setup with Docker (Recommended)
+Create a directory for n8n data:
+
+
+```bash
+mkdir n8n-data && cd n8n-data
+```
+Pull and run the n8n Docker container:
+
+```bash
+
+
+docker run -d -p 5678:5678 -v ~/.n8n:/home/node/.n8n n8nio/n8n
+```
+
+Access the UI:
+Open your browser and go to: http://localhost:5678
+
+You can now visually build workflows that your Streamlit app will trigger via webhook calls.
+
+🔐 Optional: Set Admin Credentials
+To enable basic authentication for your local n8n instance:
+
+```bash
+docker run -it --rm \
+  -p 5678:5678 \
+  -v ~/.n8n:/home/node/.n8n \
+  -e N8N_BASIC_AUTH_ACTIVE=true \
+  -e N8N_BASIC_AUTH_USER=admin \
+  -e N8N_BASIC_AUTH_PASSWORD=yourpassword \
+  n8nio/n8n
+```
+🔗 Connect Streamlit to n8n
+In your Python app (e.g., utils/webhook.py), send data to n8n using:
+
+```bash
+WEBHOOK_URL = "http://localhost:5678/webhook/my-workflow"
+```
+
+Replace "my-workflow" with your actual webhook endpoint in n8n.
+
+Use requests.post(...) to send data to the workflow.
+
+📌 Tips
+Keep the Docker container running while using the app.
+
+To run n8n in the background:
+
+```bash
+docker run -d -p 5678:5678 -v ~/.n8n:/home/node/.n8n n8nio/n8n
+```
+📥 Importing the Example Workflow
+To get started quickly:
+
+Open the n8n UI (http://localhost:5678)
+
+Click the hamburger menu (☰) in the top-right corner
+
+Choose Import from file
+
+Select the provided n8n_Json.json file included in this project
+
+This file contains the ready-to-use automation workflow for your app.
 
 ### 7. Import the OpenAPI Credentials:
 
