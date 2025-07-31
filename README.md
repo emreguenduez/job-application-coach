@@ -70,7 +70,7 @@ pip install -r requirements.txt
 
 ### 4. Configure Environment Variables
 
-Create a `.env` file in the crawlers folder and add RAPIDAPI_KEY key to it. The value for this API key is provided in report.
+Create a `.env` file in the crawlers folder and add RAPIDAPI_KEY key to it. The value for this API key is provided in the email that we have sent to you.
 
 ### 5. Run Streamlit UI
 
@@ -84,7 +84,7 @@ In n8n editor choose Import from file and then select n8n_Json.json file; this i
 
 ### 7. Import the OpenAPI Credentials:
 
-Copy and paste the provided OpenAI API key from the report. In n8n editor and inside the credentials section, enter the OpenAI API key and save it. Go to workflow and select this credential for each of the 3 agents and then activate the workflow.
+Copy and paste the provided OpenAI API key from the email have sent to you. In n8n editor and inside the credentials section, enter the OpenAI API key and save it. Go to workflow and select this credential for each of the 3 agents and then activate the workflow.
 
 
 ## 📡 How It Works
