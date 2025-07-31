@@ -21,7 +21,7 @@ import requests  # for HTTP requests
 
 
 ################################################################################
-# Helper functions – CV generation and skill extraction (used with webhook)
+# Helper functions
 ################################################################################
 
 def generate_cv(json_data: dict, output_path: str = "generated_cv.pdf") -> str:
@@ -136,9 +136,6 @@ def extract_skills_from_description(description: str) -> List[str]:
     desc_lower = description.lower()
     return [kw.capitalize() if kw.islower() else kw for kw in COMMON_SKILLS if kw in desc_lower]
 
-# Note: generate_interview_questions is removed 
-# because interview questions are now generated entirely via the webhook.
-
 ################################################################################
 # PDF Preview Helper & Streamlit UI
 ################################################################################
@@ -205,7 +202,6 @@ with st.form("personal_info_form", clear_on_submit=False):
         name = st.text_input("Name", state.get("profile", {}).get("name", ""), placeholder="Enter your full name")
         title = st.text_input("Professional Title", state.get("profile", {}).get("title", ""), placeholder="Enter your professional title")
         summary = st.text_area("Professional Summary", state.get("profile", {}).get("summary", ""), placeholder="Write a brief summary about yourself")
-        # Default key skills is now empty with a placeholder
         skills = st.text_input("Key Skills (comma‑separated)", "", placeholder="E.g., Python, SQL, JavaScript")
 
     st.markdown("#### 🧳 Experience")
@@ -334,8 +330,6 @@ with cv_tab:
                         "personal_details": state["profile"],
                         "selected_job": selected_job  # unchanged
                     }
-                    st.write("DEBUG: Payload to webhook:", unified_payload)  # added debug point
-
                     result = send_to_webhook(unified_payload)
                     result_dict = result[0] if isinstance(result, list) and result else result
 
@@ -381,12 +375,11 @@ with interview_tab:
     if not state.get("job_results"):
         st.info("Run a job search first so we have a description to analyse.")
     else:
-        # Job seçenekleri oluştur
+        # create job options
         job_options = {f"{i+1}. {j['title']} – {j['company']}": j for i, j in enumerate(state["job_results"])}
         selected_job = st.selectbox("Choose a job posting", list(job_options.keys()))
         jd_default = job_options[selected_job]["full_description"]
 
-        # Dinamik yükseklik: 20 karakter/satır, 5 piksel/satır
         estimated_lines = max(len(jd_default) // 100, 10)
         text_area_height = estimated_lines * 20  # örn. 20 piksel/satır
 
@@ -399,7 +392,7 @@ with interview_tab:
         }
 
 
-        # Tüm joblar için webhook'a gönder
+        # send to webhook for all jobs
         if st.button("Generate Interview Questions For Selected Job"):
             with st.spinner("Sending request to Interview agent..."):
                 unified_payload = {  # added spinner context
@@ -409,16 +402,16 @@ with interview_tab:
                 }
                 result = send_to_webhook(unified_payload)
 
-                # Normalize: Eğer liste geldiyse içinden al
+                # Normalize
                 result_dict = result[0] if isinstance(result, list) and result else result
 
-                # Başlık eşlemesi için liste oluştur
+                # create list for title matching
                 job_titles = [f"{job['title']} – {job['company']}" for job in state["job_results"]]
 
                 if result_dict:
                     st.success("Interview questions received!")
                     for i, (job_key, job_data) in enumerate(result_dict.items()):
-                        # Eşleşen başlıkla göster (ya da fallback)
+                        # show with the matched title
                         title = job_titles[i] if i < len(job_titles) else job_key
                         questions = job_data.get("interview_questions", [])
 
@@ -468,7 +461,7 @@ with email_tab:
             }
             result = send_to_webhook(unified_payload)
 
-            # Normalize webhook result (handle both dict and list)
+            # Normalize
             result_dict = result[0] if isinstance(result, list) and result else result
 
             if result_dict.get("email_draft", {}).get("draft"):
@@ -477,25 +470,16 @@ with email_tab:
                 
                 subject = f"Regarding the {selected_job['title']} position at {selected_job['company']}"
                 
-                # Satır boşluklarını düzelt
                 formatted_text = draft_text.replace("\\n", "\n")
 
-                # Yüksekliği ayarla
                 lines = max(formatted_text.count("\n") + 5, 12)
                 height = lines * 20
 
-                # Konu ayrı göster
                 st.markdown(f"**Subject:** `{subject}`")
 
-                # Taslak mail metni
                 st.text_area("Email Preview", formatted_text, height=height, key="email_preview")
 
 
 
             else:
                 st.warning("Email draft not returned by webhook. (This is normal if email step is disabled.)")
-
-
-
-
-
