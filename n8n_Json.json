@@ -13,17 +13,11 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        1880,
-        140
+        0,
+        0
       ],
-      "id": "1eacee93-5fb3-435f-8559-32da61570119",
-      "name": "MongoDB1",
-      "credentials": {
-        "mongoDb": {
-          "id": "uZHsG5135nLVqfPP",
-          "name": "MongoDB account"
-        }
-      }
+      "id": "6cb63668-f1b9-4a96-8023-6b9dec39f2aa",
+      "name": "MongoDB1"
     },
     {
       "parameters": {
@@ -33,10 +27,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        2480,
-        860
+        608,
+        720
       ],
-      "id": "950b8531-730c-4c62-a703-2bf277bd8127",
+      "id": "b0f05b6a-5b3e-4c35-bfcd-a1afe62ed2b5",
       "name": "Respond to Webhook1"
     },
     {
@@ -122,10 +116,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
-        1740,
-        860
+        -144,
+        720
       ],
-      "id": "48281b02-5db8-4c3a-8e8c-9ce324a9e5ed",
+      "id": "600d7f62-af4c-4ab5-a520-90e9bfe433d1",
       "name": "Switch"
     },
     {
@@ -138,10 +132,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        1400,
-        860
+        -480,
+        720
       ],
-      "id": "df220a03-f780-4eff-b142-45eb3cabe9a1",
+      "id": "aead6fb7-4f85-463a-94e3-e71f43fdcc23",
       "name": "Webhook",
       "webhookId": "2037dafb-3a78-4ece-9f03-3db50f6dda2f"
     },
@@ -152,10 +146,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1580,
-        860
+        -304,
+        720
       ],
-      "id": "5bdc4d73-d0fe-41f1-b584-d1ee51fea9c4",
+      "id": "ef355bf5-69f6-4df6-8d06-18791c8e3fae",
       "name": "Set_Code"
     },
     {
@@ -180,15 +174,15 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.8,
       "position": [
-        2000,
-        660
+        128,
+        528
       ],
-      "id": "b6795ded-3ba0-4054-b920-2b5946bf4108",
+      "id": "2694a907-a0e5-4817-a877-b480f2b5d3b5",
       "name": "Email Draft Agent",
       "credentials": {
         "openAiApi": {
-          "id": "2eJ5N9zmjvbmnn06",
-          "name": "OpenAi account"
+          "id": "O8KzBUZ1ab8mpGYT",
+          "name": "OpenAi account 2"
         }
       }
     },
@@ -214,15 +208,15 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.8,
       "position": [
-        2000,
-        860
+        128,
+        720
       ],
-      "id": "6b7dabde-1b57-4f37-8124-0ad9bd19c69c",
+      "id": "70647fec-d339-4e7b-a9b6-3c6e983ee0f8",
       "name": "Interview Question Generator Agent",
       "credentials": {
         "openAiApi": {
-          "id": "2eJ5N9zmjvbmnn06",
-          "name": "OpenAi account"
+          "id": "O8KzBUZ1ab8mpGYT",
+          "name": "OpenAi account 2"
         }
       }
     },
@@ -233,10 +227,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2180,
-        660
+        304,
+        528
       ],
-      "id": "fdc23684-b50b-4894-93f3-ae3dc578847f",
+      "id": "1aecfad3-d3a0-479e-a5c8-880a32c51d85",
       "name": "Type_Caster_1"
     },
     {
@@ -246,10 +240,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2180,
-        860
+        304,
+        720
       ],
-      "id": "29d576cc-3776-434d-8a5e-f285d4036b96",
+      "id": "afcf1f96-9c13-4abb-97db-fb166cec66a6",
       "name": "Type_Caster_2"
     },
     {
@@ -263,7 +257,7 @@
         "messages": {
           "values": [
             {
-              "content": "=You are a CV enhancement agent.\n\nYour task is to take a candidate's background and a specific job posting, then generate:\n1. A revised, compelling personal summary paragraph (3–5 sentences)\n2. 3 to 5 tailored experience bullet points, suitable for a CV\n\nUse the fields from the input JSON as follows:\n\n{{$json.payload.selected_job.title}}                  → [position]  \n{{$json.payload.selected_job.company}}                → [company_name]  \n{{$json.payload.selected_job.location}}               → [job_location]  \n{{$json.payload.selected_job.full_description}}       → [job_description] (for detailed analysis)  \n{{$json.payload.personal_details.name}}               → [applicant_name]  \n{{$json.payload.personal_details.summary}}            → [personal_summary]  \n{{$json.payload.personal_details.skills}}             → [skills] (comma-separated list)  \n{{$json.payload.personal_details.experience[0]}}      → [first_experience]  \n{{$json.payload.personal_details.education[0][\"Area of Study\"]}} → [education_area]  \n{{$json.payload.personal_details.education[0].Institution}}       → [education_institution]  \n\n---\n\nInstructions:\n\n- Analyze the job_description and align the candidate's summary and experience bullets to it.\n- Rephrase and enhance the personal_summary to better fit the selected job.\n- From the candidate's first_experience and skills, craft 3–5 concise and job-relevant bullet points.\n- Emphasize technologies, tools, accomplishments, and soft skills that match the position.\n- Be specific, formal, and use natural language.\n- Avoid generic or vague language (e.g., “team player”, “hard-working”).\n\n---\n\nReturn a valid JSON object exactly like this:\n\n{\n  \"summary\": \"A revised professional summary tailored to the job...\",\n  \"bullet_points\": [\n    \"- Relevant accomplishment 1\",\n    \"- Relevant accomplishment 2\",\n    \"- ... up to 5 bullet points\"\n  ]\n}\n\nDo not include markdown, explanation, headings, or any extra output.\n"
+              "content": "=You are a CV enhancement agent.\n\nYour task is to take a candidate's background and a specific job posting, then generate:\n1. A revised, compelling personal summary paragraph (3–5 sentences)\n2. Tailored bullet‑point achievements for up to the first five experiences in the profile\n\nUse the fields from the input JSON exactly as listed below (do not alter their paths or casing):\n\n{{$json.payload.selected_job.title}}                        → [position]  \n{{$json.payload.selected_job.company}}                      → [company_name]  \n{{$json.payload.selected_job.location}}                     → [job_location]  \n{{$json.payload.selected_job.full_description}}             → [job_description]  \n\n{{$json.payload.personal_details.name}}                     → [applicant_name]  \n{{$json.payload.personal_details.summary}}                  → [personal_summary]  \n{{$json.payload.personal_details.skills}}                   → [skills]  \n\n**Experiences (first five if available)**  \n{{$json.payload.personal_details.experience[0]}}            → [experience_0]  \n{{$json.payload.personal_details.experience[1]}}            → [experience_1]  \n{{$json.payload.personal_details.experience[2]}}            → [experience_2]  \n{{$json.payload.personal_details.experience[3]}}            → [experience_3]  \n{{$json.payload.personal_details.experience[4]}}            → [experience_4]  \n\n**Educations (first five if available)**  \n{{$json.payload.personal_details.education[0][\"Area of Study\"]}} → [education_area_0]  \n{{$json.payload.personal_details.education[0].Institution}}       → [education_institution_0]  \n{{$json.payload.personal_details.education[1][\"Area of Study\"]}} → [education_area_1]  \n{{$json.payload.personal_details.education[1].Institution}}       → [education_institution_1]  \n{{$json.payload.personal_details.education[2][\"Area of Study\"]}} → [education_area_2]  \n{{$json.payload.personal_details.education[2].Institution}}       → [education_institution_2]  \n{{$json.payload.personal_details.education[3][\"Area of Study\"]}} → [education_area_3]  \n{{$json.payload.personal_details.education[3].Institution}}       → [education_institution_3]  \n{{$json.payload.personal_details.education[4][\"Area of Study\"]}} → [education_area_4]  \n{{$json.payload.personal_details.education[4].Institution}}       → [education_institution_4]  \n\n---\n\nInstructions:\n\n1. Study [job_description] and align all output to its requirements.  \n2. Rewrite [personal_summary] into 3–5 sentences that directly target [position] at [company_name]. keep every factual detail but elevate the wording with strong action verbs, measurable impact, and keywords from [job_description].    \n3. **Build experience bullets**  \n   For each of [experience_0] … [experience_4] that exists:  \n   • Locate any bullet data:  \n     – `bullet_points` array **or** `\"Bullet Points\"` array  \n     – OR a single string containing bullets separated by line breaks or “•”/“-” characters.  \n   • **Extract every factual statement** from those bullets (quantities, technologies, results, leadership actions, etc.).  \n   • Upgrade the wording of each fact with strong action verbs, measurable impact, and keywords from [job_description].  \n   • If the experience lacks bullet data entirely, generate 3–5 new bullets from the experience’s other fields (role, achievements) plus [skills].  \n   • After enhancement/creation, keep 3–5 bullets for that experience—no more, no fewer.\n\n4. **Education context (optional)**  \n   Draw on [education_area_0…4] and [education_institution_0…4] only when they strengthen either the summary or the experience bullets (e.g., referencing a specialised degree or certification that is relevant to [job_description]).\n\n5. **Language & style**  \n   Use specific, formal language; highlight technologies, tools, and quantifiable results.  \n   Avoid empty clichés (“team player”, “hard‑working”).  \n   Bullet syntax: each bullet must start with “- ” (hyphen + space).\n\n---\n\nReturn a valid JSON object **exactly** like this:\n\n{\n  \"summary\": \"A revised professional summary tailored to the job...\",\n  \"experiences\": [\n    {\n      \"index\": 0,\n      \"bullet_points\": [\n        \"- Enhanced accomplishment 1 for experience 0\",\n        \"- Enhanced accomplishment 2 for experience 0\",\n        \"- ... up to 5 bullets\"\n      ]\n    },\n    {\n      \"index\": 1,\n      \"bullet_points\": [\n        \"- Enhanced accomplishment 1 for experience 1\",\n        \"- ... up to 5 bullets\"\n      ]\n    }\n    // Repeat for every included experience (indices 0‑4). Omit any indices that were not present in the input.\n  ]\n}\n\nDo not include markdown, explanation, headings, or any extra output."
             }
           ]
         },
@@ -273,15 +267,15 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.8,
       "position": [
-        2000,
-        1080
+        128,
+        944
       ],
-      "id": "b1fe73ae-d323-4710-a3e6-4d3398c18d17",
+      "id": "c3c536b9-ee0d-434a-9d39-754d85911f35",
       "name": "CV Generator Agent",
       "credentials": {
         "openAiApi": {
-          "id": "2eJ5N9zmjvbmnn06",
-          "name": "OpenAi account"
+          "id": "O8KzBUZ1ab8mpGYT",
+          "name": "OpenAi account 2"
         }
       }
     }
@@ -395,11 +389,10 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "087f5bca-5142-40ec-9f07-a5da9be3d1fd",
+  "versionId": "9d8ea190-80e4-4557-b6cd-dd8d3ba2a7e3",
   "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "8b3444ced120670fe84ad59fef4d2183fdb3332816e655bd78642079070e0b1d"
+    "instanceId": "0839152a33cd2134e6bba1921f85635398f2e04bf886d81ce148d5a49241e78b"
   },
-  "id": "ct8R0TrucShCiUvQ",
+  "id": "PF1W4JhEeb4Ohtsd",
   "tags": []
 }
